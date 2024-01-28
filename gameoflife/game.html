@@ -1,0 +1,305 @@
+<html>
+<head>  
+  <meta charset="UTF-8">
+  <title>Game of Life</title>
+  <script src="jquery.js"></script>
+  <style>
+    #game {
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+	<br />
+	<button onclick="step()">Step</button>
+	<br />
+	Interval: <input type="range" min="100" max="10000" id="interval_range" value="500" step="50"><br />
+	<input type="text" id="interval" value="500">
+	<button id="play">Play</button>
+
+  <script>
+
+  var GAME_WIDTH = 1000;
+  var GAME_HEIGHT = 700;
+  var SQUARE_SIZE = 20;
+  var FILLED = [];
+  var NEW = [];
+  var c = document.getElementById("game");
+  var ctx = c.getContext("2d");
+	var playing = false;
+	var INTERVAL = 500;
+	var play_int;
+
+  function drawMap(width, height, square, arr) {
+    ctx.clearRect(0, 0, c.width, c.height);
+    var gamewidth,gameheight,tmp;
+    
+    if(width % square == 0) {
+      gamewidth = width;
+    } else {
+      tmp = Math.round(width / square);
+      gameheight = tmp * square;
+    }
+
+    if(height % square == 0) {
+      gameheight = height;
+    } else {
+      tmp = Math.round(height / square);
+      gameheight = tmp * square;
+    }
+
+    c.width = gamewidth;
+    c.height = gameheight;
+
+    ctx.beginPath();
+
+    for(var i = 0; i <= width; i = i + square) {
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, height);
+      ctx.strokeStyle = "#c9c9c9";
+      ctx.stroke();
+    }
+
+    for(var j = 0; j <= height; j = j + square) {
+      ctx.moveTo(0, j);
+      ctx.lineTo(width, j);
+      ctx.strokeStyle = "#c9c9c9";
+      ctx.stroke();
+    }
+
+		for(var x = 0; x < arr.length; x++) {
+			drawRect(arr[x][0], arr[x][1]);
+		}
+
+  }
+    
+    function drawRect(x, y) {
+      var rectX = ((x - 1) * SQUARE_SIZE) + 2;
+      var rectY = ((y - 1) * SQUARE_SIZE) + 2;
+
+      ctx.beginPath();
+
+      ctx.lineWidth = 2
+      ctx.fillStyle = "#000000";
+      ctx.strokeStyle = "#000000";
+
+      ctx.rect(rectX, rectY, SQUARE_SIZE - 4, SQUARE_SIZE - 4);
+      ctx.fill();
+    }
+
+    function removeRect(x, y) {
+      var rectX = ((x - 1) * SQUARE_SIZE) + 2;
+      var rectY = ((y - 1) * SQUARE_SIZE) + 2;
+
+      ctx.beginPath();
+
+      ctx.lineWidth = 2;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.strokeStyle = "#FFFFFF";
+
+      ctx.rect(rectX, rectY, SQUARE_SIZE - 4, SQUARE_SIZE - 4);
+      ctx.fill();
+   }
+
+    function isAlive(x, y) {
+      var p;
+      var canvX = ((x - 1) * SQUARE_SIZE) + (SQUARE_SIZE / 2);
+      var canvY = ((y - 1) * SQUARE_SIZE) + (SQUARE_SIZE / 2);
+
+      p = ctx.getImageData(canvX, canvY, 1, 1).data;
+      if((p[0] > 0 || p[1] > 0 || p[2] > 0 || p[3] > 0) && (p[0] != 255 && p[1] != 255 && p[2] != 255)) {
+	return true;
+      } else {
+        return false;
+      }
+    }
+
+    function getCoordinates(x, y) {
+      var coords = new Array();
+      coords['x'] = Math.round(x / SQUARE_SIZE);
+      coords['y'] = Math.round(y / SQUARE_SIZE);
+
+      return coords;
+    }
+
+    function indexOfArray(x, y, arr) {
+      if(arr.length < 1) {
+        return false;
+      } else {
+        for(var i = 0; i < arr.length; i++) {
+	  if(arr[i][0] == x && arr[i][1] == y) {
+	    return i;
+	  }
+	}
+	return false;
+      }
+    }
+
+    function calcNeighbors(x, y) {
+      var neighbors = 0;
+
+      if(isAlive(x + 1, y)) {
+        neighbors++;
+      }
+      if(isAlive(x - 1, y)) {
+        neighbors++;
+      }
+      if(isAlive(x + 1, y + 1)) {
+        neighbors++;
+      }
+      if(isAlive(x - 1, y + 1)) {
+        neighbors++;
+      }
+      if(isAlive(x - 1, y - 1)) {
+        neighbors++;
+      }
+      if(isAlive(x + 1, y - 1)) {
+        neighbors++;
+      }
+      if(isAlive(x, y + 1)) {
+        neighbors++;
+      }
+      if(isAlive(x, y - 1)) {
+        neighbors++;
+      }
+
+      return neighbors;
+    }
+
+    function step() {
+      var neighbors, nX, nY;
+      NEW = [];
+
+      for(var i = 0; i < FILLED.length; i++) {
+				nX = FILLED[i][0];
+				nY = FILLED[i][1];
+				neighbors = calcNeighbors(nX, nY);
+				if(neighbors < 2 || neighbors > 3) {
+					// cell dies
+			  } else {
+					if(typeof(indexOfArray(nX, nY, NEW)) == "boolean") {
+						NEW.push([nX, nY]);
+					}
+				}
+
+				if(isAlive(nX + 1, nY) === false) {
+					neighbors = calcNeighbors(nX + 1, nY);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX + 1, nY, NEW)) == "boolean") {
+							NEW.push([nX + 1, nY]);
+						}
+					}
+				}
+
+				if(isAlive(nX - 1, nY) === false) {
+					neighbors = calcNeighbors(nX - 1, nY);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX - 1, nY, NEW)) == "boolean") {
+							NEW.push([nX - 1, nY]);
+						}
+					}
+				}
+
+				if(isAlive(nX, nY + 1) === false) {
+					neighbors = calcNeighbors(nX, nY + 1);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX, nY + 1, NEW)) == "boolean") {
+							NEW.push([nX, nY + 1]);
+						}
+					}
+				}
+
+				if(isAlive(nX, nY - 1) === false) {
+					neighbors = calcNeighbors(nX, nY - 1);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX, nY - 1, NEW)) == "boolean") {
+							NEW.push([nX, nY - 1]);
+						}
+					}
+				}
+
+				if(isAlive(nX + 1, nY + 1) === false) {
+					neighbors = calcNeighbors(nX + 1, nY + 1);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX + 1, nY + 1, NEW)) == "boolean") {
+							NEW.push([nX + 1, nY + 1]);
+						}
+					}
+				}
+
+				if(isAlive(nX + 1, nY - 1) === false) {
+					neighbors = calcNeighbors(nX + 1, nY - 1);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX + 1, nY - 1, NEW)) == "boolean") {
+							NEW.push([nX + 1, nY - 1]);
+						}
+					}
+				}
+
+				if(isAlive(nX - 1, nY + 1) === false) {
+					neighbors = calcNeighbors(nX - 1, nY + 1);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX - 1, nY + 1, NEW)) == "boolean") {
+							NEW.push([nX - 1, nY + 1]);
+						}
+					}
+				}
+
+				if(isAlive(nX - 1, nY - 1) === false) {
+					neighbors = calcNeighbors(nX - 1, nY - 1);
+					if(neighbors == 3) {
+						if(typeof(indexOfArray(nX - 1, nY - 1, NEW)) == "boolean") {
+							NEW.push([nX - 1, nY - 1]);
+						}
+					}
+				}
+			}
+				drawMap(GAME_WIDTH, GAME_HEIGHT, SQUARE_SIZE, NEW);
+				FILLED = NEW;
+     		console.log(FILLED); 
+    }
+
+    $("#game").click(function(e) {
+      var coords = getCoordinates(e.pageX, e.pageY);
+      if(isAlive(coords['x'], coords['y'])) {
+        removeRect(coords['x'], coords['y']);
+	var ind = indexOfArray(coords['x'], coords['y'], FILLED);
+	FILLED.splice(ind, 1);
+      } else {
+        drawRect(coords['x'], coords['y']);
+        FILLED.push([coords['x'], coords['y']]);
+      }
+    });
+
+		$("input#interval_range").on("input", function() {
+			var interval = parseInt($(this).val());
+			$("input#interval").val(interval);
+			INTERVAL = interval;
+		});
+
+		$("#play").click(function() {
+			if(playing == false) {
+				INTERVAL = parseInt($("input#interval").val());
+				play_int = setInterval(function() {
+					step();
+				}, INTERVAL);
+				playing = true;
+				$("button#play").text("Stop");
+			} else {
+				clearInterval(play_int);
+				playing = false;
+				$("button#play").text("Play");
+			}
+		});
+
+    drawMap(GAME_WIDTH, GAME_HEIGHT, SQUARE_SIZE, FILLED);
+
+  </script>
+  <h1>Rules:</h1>
+  <h3>* Dead cell with exactly 3 neighbors becomes alive</h3>
+  <h3>* Live cell with less than 2 neighbors dies from loneliness</h3>
+  <h3>* Live cell with more than 3 neighbors dies from over-population</h3>
+</body>
+</html>
+
