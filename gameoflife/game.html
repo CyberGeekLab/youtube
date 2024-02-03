@@ -20,16 +20,16 @@
 
   <script>
 
-  var GAME_WIDTH = 1000;
-  var GAME_HEIGHT = 700;
-  var SQUARE_SIZE = 20;
-  var FILLED = [];
-  var NEW = [];
-  var c = document.getElementById("game");
-  var ctx = c.getContext("2d");
-	var playing = false;
-	var INTERVAL = 500;
-	var play_int;
+    var GAME_WIDTH = 1000;
+    var GAME_HEIGHT = 700;
+    var SQUARE_SIZE = 20;
+    var FILLED = [];
+    var NEW = [];
+    var c = document.getElementById("game");
+    var ctx = c.getContext("2d");
+    var playing = false;
+    var INTERVAL = 500;
+    var play_int;
 
   function drawMap(width, height, square, arr) {
     ctx.clearRect(0, 0, c.width, c.height);
